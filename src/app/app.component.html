@@ -1,0 +1,102 @@
+<div class="grid grid-cols-3 gap-4">
+  <!-- Sidebar: Field Groups -->
+  <aside class="bg-gray-100 border-r p-4">
+    <h2 class="text-lg font-bold mb-4">Field Groups</h2>
+    <ul class="space-y-2">
+      <li *ngFor="let group of fieldGroups" 
+          (click)="setActiveGroup(group.id)"
+          class="p-2 cursor-pointer rounded-lg transition-colors duration-200"
+          [ngClass]="{'bg-blue-500 text-white': activeGroup === group.id, 'hover:bg-gray-200': activeGroup !== group.id}">
+        {{ group.name }}
+      </li>
+    </ul>
+    <button class="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition" (click)="addGroup()">
+      Add New Group
+    </button>
+  </aside>
+
+  <!-- Main Content Area (Form Preview) -->
+  <aside class="bg-gray-100 border-r p-4">
+    <header class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">{{ getActiveGroupName() }}</h1>
+      <button class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 transition"  (click)="exportConfiguration()">
+        Save Form
+      </button>
+    </header>
+
+    <!-- <h2 class="text-lg font-bold mb-4">Form Preview</h2> -->
+    <div class="w-full h-full p-4 bg-gray-50 border rounded-lg"
+         (drop)="onDrop($event)" 
+         (dragover)="onDragOver($event)">
+      <p *ngIf="fields.length === 0" class="text-gray-500 text-center">
+        Drag elements here to build the form.
+      </p>
+      <ul *ngIf="fields.length > 0" class="space-y-4">
+        <li *ngFor="let field of fields" class="p-4 bg-white border rounded-lg shadow-sm hover:shadow-md">
+          <div *ngIf="field.type !== 'upload'">
+            <!-- Editable label -->
+            <input type="text" [(ngModel)]="field.label" (ngModelChange)="onFieldLabelChange(field.id, field.label)" 
+                   class="mb-2 p-2 border rounded-lg w-full text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            
+            <!-- Field value input (if not upload) -->
+            <input *ngIf="field.type === 'single_text'" [(ngModel)]="field.value" 
+                   (ngModelChange)="onFieldValueChange(field.id, field.value)" 
+                   class="mb-2 p-2 border rounded-lg w-full text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+                   placeholder="Enter text" />
+
+            <textarea *ngIf="field.type === 'multi_text'" [(ngModel)]="field.value" 
+                      (ngModelChange)="onFieldValueChange(field.id, field.value)" 
+                      class="mb-2 p-2 border rounded-lg w-full text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+                      placeholder="Enter multiline text"></textarea>
+                      <!-- Email Field Validation -->
+                      <input *ngIf="field.type === 'email'"
+                      [(ngModel)]="field.value"
+                      name="email{{ field.id }}"
+                      class="mb-2 p-2 border rounded-lg w-full text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      [required]="field.validations?.required"
+                      placeholder="Enter email"
+                      #email="ngModel" />
+                    
+          </div>
+
+          <div *ngIf="field.type === 'upload'">
+            <label class="block text-sm font-medium text-gray-700">Upload File</label>
+            <input type="file" (change)="importConfiguration($event)" class="mt-1 block w-full border rounded-lg p-2" />
+            <p *ngIf="field.fileName" class="text-sm text-gray-500 mt-2">Import Configuration (JSON)</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- Sidebar: Available Elements -->
+  <aside class="bg-gray-100 p-4">
+    <section class="bg-white p-4 border rounded-lg shadow-sm">
+      <h2 class="text-lg font-bold mb-4">Elements</h2>
+      <div *ngFor="let element of elementsList" 
+           (dragstart)="onDragStart($event, element)" 
+           draggable="true"
+           class="p-3 mb-3 bg-white border rounded-lg shadow hover:bg-gray-100 cursor-pointer transition duration-150 ease-in-out">
+        {{ element.label }}
+      </div>
+    </section>
+  </aside>
+</div>
+
+<!-- Modal for Preview -->
+<div *ngIf="isPreviewOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-50">
+  <div class="bg-white p-6 rounded-lg shadow-lg w-1/2">
+    <h3 class="text-lg font-semibold mb-4">Configuration Preview</h3>
+    <pre class="text-sm text-gray-700 overflow-auto" style="max-height: 300px; white-space: pre-wrap;">
+      {{ previewContent | json }}
+    </pre>
+    <div class="mt-4 flex justify-end">
+      <button (click)="closePreview()" class="mr-2 bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
+        Cancel
+      </button>
+      <button (click)="applyImport()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        Confirm Import
+      </button>
+    </div>
+  </div>
+</div>
